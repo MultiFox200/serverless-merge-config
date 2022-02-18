@@ -5,7 +5,8 @@ const {
   forEach,
   isArray,
   isPlainObject,
-  unset
+  unset,
+  unionBy,
 } = require('lodash')
 
 class ServerlessMergeConfig {
@@ -24,11 +25,29 @@ class ServerlessMergeConfig {
     this.deepMerge(this.serverless.service)
   }
 
-  deepMerge (obj) {
+  deepMerge (obj, parent) {
     forEach(obj, (value, key, collection) => {
-      if (isPlainObject(value) || isArray(value)) {
-        this.deepMerge(value)
+      if (key === '$<<[Name]' && isArray(parent)) {
+        unset(obj, key);
+        if (isArray(value)) {
+          const mergedArray = unionBy(parent, value, 'Name').filter(v => Object.keys(v).length !== 0);
+
+          // Clean parent from old variables
+          while (parent.length > 0) {
+            parent.pop();
+          }
+
+          // Insert new values into parent
+          for (const value of mergedArray) {
+            parent.push(value);
+          }
+        }
       }
+
+      if (isPlainObject(value) || isArray(value)) {
+        this.deepMerge(value, obj);
+      }
+
       if (key === '$<<') {
         if (isArray(value)) {
           value.forEach((subValue) => {
