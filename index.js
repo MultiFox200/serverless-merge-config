@@ -30,8 +30,9 @@ class ServerlessMergeConfig {
       if (key === '$<<[Name]' && isArray(parent)) {
         unset(obj, key);
         if (isArray(value)) {
-          const mergedArray = unionBy(parent, value, 'Name').filter(v => Object.keys(v).length !== 0);
-
+          const fixedParent = parent.filter(v => v !== null);
+          const mergedArray = unionBy(fixedParent, value, 'Name').filter(v => Object.keys(v).length !== 0);
+          
           // Clean parent from old variables
           while (parent.length > 0) {
             parent.pop();
